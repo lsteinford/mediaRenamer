@@ -8,7 +8,9 @@ from functions import update_example, parse_folder, insert_preview, rename_file
 ctk.set_appearance_mode("system") # Modes: system (default), light, dark
 ctk.set_default_color_theme("dark-blue") # Themes: blue (default), dark-blue, green
 
-root =ctk.CTk()
+root = ctk.CTk()
+
+global_font = ctk.CTkFont(family="Arial", size=16)
 
 root.title("Media Renamer")
 
@@ -19,10 +21,10 @@ frame.pack()
 example_frame = ctk.CTkFrame(frame)
 example_frame.grid(row=1, column=0, columnspan=2, padx=20, pady=20)
 
-example_label = ctk.CTkLabel(example_frame, text="Naming Convention Example")
+example_label = ctk.CTkLabel(example_frame, text="Naming Convention Example", font=global_font)
 example_label.grid(row=0, column=0)
 
-example_text = ctk.CTkTextbox(example_frame, height=1, width=400, state=DISABLED)
+example_text = ctk.CTkTextbox(example_frame, height=1, width=500, state=DISABLED, font=global_font)
 example_text.grid(row=1, column=0, columnspan=2)
 
 for widget in example_frame.winfo_children():
@@ -50,9 +52,9 @@ naming_convention = {
 
 # Create tab screens
 def create_combobox(frame, label_text, label_row, label_col, tab_name, widget_name, widget_row, widget_col, values):
-    combobox = ctk.CTkLabel(frame, text=label_text)
+    combobox = ctk.CTkLabel(frame, text=label_text, font=global_font)
     combobox.grid(row=label_row, column=label_col)
-    widgets[tab_name][widget_name] = ctk.CTkComboBox(frame, values=values, command=lambda _:update_example(widgets, example_text, get_selected_tab()))
+    widgets[tab_name][widget_name] = ctk.CTkComboBox(frame, values=values, font=global_font, command=lambda _:update_example(widgets, example_text, get_selected_tab()))
     widgets[tab_name][widget_name].grid(row=widget_row, column=widget_col)
 
 def format_options(frame, tab_name):
@@ -65,10 +67,11 @@ def format_options(frame, tab_name):
     widgets[tab_name]["sub_delim"].set('-')
 
     widgets[tab_name]["lowercase"] = IntVar()
-    lowercase_label = ctk.CTkLabel(frame, text="Case Sensitivity")
+    lowercase_label = ctk.CTkLabel(frame, text="Case Sensitivity", font=global_font)
     lowercase_label.grid(row=4, column=0, columnspan=2)
     lowercase_check = ctk.CTkCheckBox(frame, variable=widgets[tab_name]["lowercase"], 
                                       onvalue=1, offvalue=0, 
+                                      font=global_font, 
                                       text="Lowercase Names", 
                                       command=lambda:update_example(widgets, example_text, get_selected_tab()))
     lowercase_check.grid(row=5, column=0, columnspan=2)
@@ -77,10 +80,11 @@ def build_series_tab(frame):
     format_options(frame, "series")
 
     widgets["series"]["episode"] = IntVar()
-    episode_name_label = ctk.CTkLabel(frame, text="Episode Names")
+    episode_name_label = ctk.CTkLabel(frame, text="Episode Names", font=global_font)
     episode_name_label.grid(row=4, column=1, columnspan=2)
     episode_name_check = ctk.CTkCheckBox(frame, variable=widgets["series"]["episode"], 
                                          onvalue=1, offvalue=0, 
+                                         font=global_font, 
                                          text="Episode names in file name", 
                                          command=lambda:update_example(widgets, example_text, get_selected_tab()))
     episode_name_check.grid(row=5, column=1, columnspan=2)
@@ -99,41 +103,45 @@ build_movie_tab(movie_tab)
 build_series_tab(series_tab)
 
 for widget in series_tab.winfo_children():
-    widget.grid_configure(padx=15, pady=5)
+    widget.grid_configure(padx=30, pady=5)
 
 for widget in movie_tab.winfo_children():
-    widget.grid_configure(padx=15, pady=5)
+    widget.grid_configure(padx=30, pady=5)
 
 # Folder Selection
 folder_frame = ctk.CTkFrame(frame)
 folder_frame.grid(row=2, column=0, columnspan=2, padx=20, pady=20)
 
-folder_label = ctk.CTkLabel(folder_frame, text="Enter or select directory")
+folder_label = ctk.CTkLabel(folder_frame, text="Enter or select directory", font=global_font)
 folder_label.grid(row=0, column=0)
 
-folder_entry = ctk.CTkEntry(folder_frame, width=300)
+folder_entry = ctk.CTkEntry(folder_frame, width=300, font=global_font)
 folder_entry.grid(row=1, column=0, columnspan=2)
 
-browse_button = ctk.CTkButton(folder_frame,
+browse_button = ctk.CTkButton(folder_frame, 
+                              font=global_font,
                               text="Browse...",
                               command=lambda: folder_entry.insert(0, filedialog.askdirectory())
                               )
 browse_button.grid(row=1, column=2)
 
-folder_button = ctk.CTkButton(folder_frame,
+folder_button = ctk.CTkButton(folder_frame, 
+                              font=global_font,
                               text="Check Folder",
                               command=lambda:parse_folder(folder_entry, folder_list, preview_button)
                               )
 folder_button.grid(row=2, column=0)
 
-preview_button = ctk.CTkButton(folder_frame,
+preview_button = ctk.CTkButton(folder_frame, 
+                               font=global_font,
                                text="Preview",
                                command=lambda:insert_preview(folder_entry, preview_list, widgets, get_selected_tab(), rename_button),
                                state=DISABLED
                                )
 preview_button.grid(row=2, column=1)
 
-rename_button = ctk.CTkButton(folder_frame,
+rename_button = ctk.CTkButton(folder_frame, 
+                              font=global_font,
                               text="Rename",
                               command=lambda:rename_file(folder_entry, widgets, get_selected_tab()),
                               state=DISABLED
@@ -150,8 +158,8 @@ folder_label.grid(row=3, column=0, padx=20, pady=20)
 preview_label = ctk.CTkFrame(frame)
 preview_label.grid(row=3, column=1, padx=20, pady=20)
 
-folder_list = ctk.CTkTextbox(folder_label, width=500, height=300, state=DISABLED)
-preview_list = ctk.CTkTextbox(preview_label, width=500, height=300, state=DISABLED)
+folder_list = ctk.CTkTextbox(folder_label, width=500, height=300, state=DISABLED, font=global_font)
+preview_list = ctk.CTkTextbox(preview_label, width=500, height=300, state=DISABLED, font=global_font)
 
 for widget in folder_label.winfo_children():
     widget.grid_configure(padx=10, pady=10)
