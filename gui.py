@@ -135,7 +135,7 @@ folder_button.grid(row=2, column=0)
 preview_button = ctk.CTkButton(folder_frame, 
                                font=global_font,
                                text="Preview",
-                               command=lambda:insert_preview(folder_entry, preview_list, widgets, get_selected_tab(), rename_button),
+                               command=lambda:insert_preview(folder_entry, preview_list, rename_button),
                                state=DISABLED
                                )
 preview_button.grid(row=2, column=1)
@@ -143,7 +143,7 @@ preview_button.grid(row=2, column=1)
 rename_button = ctk.CTkButton(folder_frame, 
                               font=global_font,
                               text="Rename",
-                              command=lambda:rename_file(folder_entry, widgets, get_selected_tab()),
+                              command=lambda:rename_file(folder_entry),
                               state=DISABLED
                               )
 rename_button.grid(row=2, column=2)

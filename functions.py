@@ -9,14 +9,24 @@ from dotenv import load_dotenv
 load_dotenv()
 apiKey = os.getenv("API_KEY")
 
+name_delim = None
+info_delim = None
+sub_delim = None
+episode = None
+lowercase = None
+media_type = None
+
 def update_example(widget, example_text, selected_tab):
-    
+    global name_delim, info_delim, sub_delim, episode, lowercase, media_type
     name_delim = widget[selected_tab]["name_delim"].get()
     info_delim = widget[selected_tab]["info_delim"].get()
     sub_delim = widget[selected_tab]["sub_delim"].get()
+    
+    lowercase = widget[selected_tab]["lowercase"].get()
+
     example_names = ["Movie","Name","Episode","Sub", "Series"]
 
-    if widget[selected_tab]["lowercase"].get() == 1:
+    if lowercase == 1:
         example_names = [name.lower() for name in example_names]
             
     media_type = 1 if selected_tab == "series" else 0
@@ -24,7 +34,8 @@ def update_example(widget, example_text, selected_tab):
     if media_type == 0:
         example = f"{example_names[0]}{name_delim}{example_names[1]}{sub_delim}{example_names[3]}{name_delim}{example_names[1]}{info_delim}YEAR.ext"
     else:
-        if widget[selected_tab]["episode"].get() is not None and widget[selected_tab]["episode"].get() == 1:
+        episode = widget[selected_tab]["episode"].get()
+        if episode is not None and episode == 1:
             example = f"{example_names[4]}{name_delim}{example_names[1]}{sub_delim}{example_names[3]}{name_delim}{example_names[1]}{info_delim}S00E00{info_delim}{example_names[2]}{name_delim}{example_names[1]}.ext"
         else:
             example = f"{example_names[4]}{name_delim}{example_names[1]}{sub_delim}{example_names[3]}{name_delim}{example_names[1]}{info_delim}S00E00.ext"
@@ -45,42 +56,28 @@ def parse_folder(folder_path, folder_list, preview_button):
     folder_list.configure(state=DISABLED)
     preview_button.configure(state=NORMAL)
 
-def insert_preview(folder_path, preview_list, widget, selected_tab, rename_button):
-    name_delim = widget[selected_tab]["name_delim"].get()
-    info_delim = widget[selected_tab]["info_delim"].get()
-    sub_delim = widget[selected_tab]["sub_delim"].get()
-    lowercase = widget[selected_tab]["lowercase"].get()
-
-    media_type = 1 if selected_tab == "series" else 0
-
+def insert_preview(folder_path, preview_list, rename_button):
     preview_list.configure(state=NORMAL)
     preview_list.delete("1.0", ctk.END)
     for item in os.scandir(folder_path.get()):
         if not item.is_file():
             continue
         if media_type == 0:
-            file_name = name_movie(item.name, name_delim, info_delim, sub_delim, lowercase, media_type)
+            file_name = name_movie(item.name)
         else:
-            episode = widget[selected_tab]["episode"].get()
-            file_name = name_series(item.name, name_delim, info_delim, sub_delim, episode, lowercase, media_type)
+            file_name = name_series(item.name)
         preview_list.insert(ctk.END, f"{file_name}\n")
     rename_button.configure(state=NORMAL)
 
-def rename_file(folder_path, widget, selected_tab):
-    name_delim = widget[selected_tab]["name_delim"].get()
-    info_delim = widget[selected_tab]["info_delim"].get()
-    sub_delim = widget[selected_tab]["sub_delim"].get()
-    lowercase = widget[selected_tab]["lowercase"].get()
-    media_type = 1 if selected_tab == "series" else 0
+def rename_file(folder_path):
 
     for item in os.scandir(folder_path.get()):
         if not item.is_file():
             continue
         if media_type == 0:
-            file_name = name_movie(item.name, name_delim, info_delim, sub_delim, lowercase, media_type)
+            file_name = name_movie(item.name)
         else:
-            episode = widget[selected_tab]["episode"].get()
-            file_name = name_series(item.name, name_delim, info_delim, sub_delim, episode, lowercase, media_type)
+            file_name = name_series(item.name)
         old_name = f"{folder_path.get()}/{item.name}"
         new_name = f"{folder_path.get()}/{file_name}"
         os.rename(old_name, new_name)
@@ -99,8 +96,8 @@ def extract_year(file_name):
         print(f"Error extracting year from {file_name}")
         return None
 
-def name_movie(file_name, name_delim, info_delim, sub_delim, lowercase, media_type):
-    show_name = detect_name(file_name, name_delim, sub_delim, media_type)
+def name_movie(file_name):
+    show_name = detect_name(file_name)
     year = extract_year(file_name)
     file_ext = get_file_extension(file_name)
     file_name = f"{show_name}{info_delim}{year}{file_ext}"
@@ -133,9 +130,9 @@ def search_episode_name(show_name, file_name):
     episode_name = data['Title']
     return episode_name
 
-def name_series(file_name, name_delim, info_delim, sub_delim, episode, lowercase, media_type):
+def name_series(file_name):
     
-    show_name = detect_name(file_name, name_delim, sub_delim, media_type).replace(".", name_delim).rstrip(name_delim)
+    show_name = detect_name(file_name).replace(".", name_delim).rstrip(name_delim)
     season = extract_season(file_name)
     file_ext = get_file_extension(file_name)
     if episode is not None and episode == 1:
@@ -152,7 +149,7 @@ def get_file_extension(file_name):
     _, extension = os.path.splitext(file_name)
     return extension
 
-def detect_name(file_name, name_delim, sub_title_delim, media_type):
+def detect_name(file_name):
     delim_pattern = r"[._ -]|(- )|(-_)"
     sub_title_pattern = rf":{name_delim}?"
 
@@ -180,7 +177,7 @@ def detect_name(file_name, name_delim, sub_title_delim, media_type):
         media_name = file_name[:end_index].strip(".,-_() !")
 
     media_name = re.sub(delim_pattern, name_delim, media_name)
-    media_name = re.sub(sub_title_pattern, sub_title_delim, media_name)
+    media_name = re.sub(sub_title_pattern, sub_delim, media_name)
 
     return media_name      
 
