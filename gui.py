@@ -2,15 +2,17 @@
 from tkinter import *
 from tkinter import filedialog
 import customtkinter as ctk
+from tktooltip import ToolTip
 from functions import update_example, parse_folder, insert_preview, rename_file
 
 # Set theme and color options
 ctk.set_appearance_mode("system") # Modes: system (default), light, dark
-ctk.set_default_color_theme("dark-blue") # Themes: blue (default), dark-blue, green
+ctk.set_default_color_theme("blue") # Themes: blue (default), dark-blue, green
 
 root = ctk.CTk()
 
 global_font = ctk.CTkFont(family="Arial", size=16)
+tab_font = ctk.CTkFont(family="Arial", size = 22)
 
 root.title("Media Renamer")
 
@@ -31,11 +33,13 @@ for widget in example_frame.winfo_children():
     widget.grid_configure(padx=10, pady=5)
 
 # Create tabs
-type_tab = ctk.CTkTabview(frame, command=lambda:update_example(widgets, example_text, get_selected_tab()))
+type_tab = ctk.CTkTabview(frame, command=lambda:update_example(widgets, example_text, get_selected_tab(), rename_button), height=100)
 type_tab.grid(row=0, column=0, columnspan=2)
 
 series_tab = type_tab.add("Series")
 movie_tab = type_tab.add("Movies")
+
+type_tab._segmented_button.configure(font=tab_font)
 
 widgets = {
     "series": {},
@@ -50,21 +54,36 @@ naming_convention = {
     "episode": {}
 }
 
+delim_options = ['_',' ','-','.']
+
 # Create tab screens
 def create_combobox(frame, label_text, label_row, label_col, tab_name, widget_name, widget_row, widget_col, values):
-    combobox = ctk.CTkLabel(frame, text=label_text, font=global_font)
-    combobox.grid(row=label_row, column=label_col)
-    widgets[tab_name][widget_name] = ctk.CTkComboBox(frame, values=values, font=global_font, command=lambda _:update_example(widgets, example_text, get_selected_tab()))
-    widgets[tab_name][widget_name].grid(row=widget_row, column=widget_col)
+    # Label for combobox
+    label = ctk.CTkLabel(frame, text=label_text, font=global_font)
+    label.grid(row=label_row, column=label_col)
+    # Create a combobox
+    combobox = ctk.CTkComboBox(frame, values=values, font=global_font, command=lambda _:update_example(widgets, example_text, get_selected_tab(), rename_button))
+    combobox.set("")
+    combobox.grid(row=widget_row, column=widget_col)
+    def custom_input(event=None):
+        custom_value = combobox.get()
+        if custom_value and custom_value not in values:
+            values.append(custom_value)
+            combobox.configure(values=values)
+        update_example(widgets, example_text, get_selected_tab(), rename_button)
+    combobox.bind("<Return>", custom_input)
+
+    widgets[tab_name][widget_name] = combobox
+
 
 def format_options(frame, tab_name):
-    create_combobox(frame, "Name Delim", 2, 0, tab_name, "name_delim", 3, 0, ['_',' ','-','.'])
-    create_combobox(frame, "Info Delim", 2, 1, tab_name, "info_delim", 3, 1, ['-',' ','_','.'])
-    create_combobox(frame, "Sub Delim", 2, 2, tab_name, "sub_delim", 3, 2, ['-',' ','_','.', '-_'])
+    create_combobox(frame, "Name Delimiter", 2, 0, tab_name, "name_delim", 3, 0, delim_options)
+    create_combobox(frame, "Info Delimiter", 2, 1, tab_name, "info_delim", 3, 1, delim_options)
+    create_combobox(frame, "Sub Delimiter", 2, 2, tab_name, "sub_delim", 3, 2, delim_options)
 
-    widgets[tab_name]["name_delim"].set('_')
-    widgets[tab_name]["info_delim"].set('-')
-    widgets[tab_name]["sub_delim"].set('-')
+    widgets[tab_name]["name_delim"].set("")
+    widgets[tab_name]["info_delim"].set("")
+    widgets[tab_name]["sub_delim"].set("")
 
     widgets[tab_name]["lowercase"] = IntVar()
     lowercase_label = ctk.CTkLabel(frame, text="Case Sensitivity", font=global_font)
@@ -73,7 +92,7 @@ def format_options(frame, tab_name):
                                       onvalue=1, offvalue=0, 
                                       font=global_font, 
                                       text="Lowercase Names", 
-                                      command=lambda:update_example(widgets, example_text, get_selected_tab()))
+                                      command=lambda:update_example(widgets, example_text, get_selected_tab(), rename_button))
     lowercase_check.grid(row=5, column=0, columnspan=2)
 
 def build_series_tab(frame):
@@ -86,7 +105,7 @@ def build_series_tab(frame):
                                          onvalue=1, offvalue=0, 
                                          font=global_font, 
                                          text="Episode names in file name", 
-                                         command=lambda:update_example(widgets, example_text, get_selected_tab()))
+                                         command=lambda:update_example(widgets, example_text, get_selected_tab(), rename_button))
     episode_name_check.grid(row=5, column=1, columnspan=2)
 
 def build_movie_tab(frame):
@@ -103,10 +122,10 @@ build_movie_tab(movie_tab)
 build_series_tab(series_tab)
 
 for widget in series_tab.winfo_children():
-    widget.grid_configure(padx=30, pady=5)
+    widget.grid_configure(padx=45, pady=5)
 
 for widget in movie_tab.winfo_children():
-    widget.grid_configure(padx=30, pady=5)
+    widget.grid_configure(padx=45, pady=5)
 
 # Folder Selection
 folder_frame = ctk.CTkFrame(frame)
@@ -139,6 +158,7 @@ preview_button = ctk.CTkButton(folder_frame,
                                state=DISABLED
                                )
 preview_button.grid(row=2, column=1)
+ToolTip(preview_button, msg="Check the media tab before clicking preview", follow=True)
 
 rename_button = ctk.CTkButton(folder_frame, 
                               font=global_font,
@@ -169,4 +189,4 @@ for widget in preview_label.winfo_children():
 
 # Binding and Function Calls
 
-update_example(widgets, example_text, get_selected_tab())
+update_example(widgets, example_text, get_selected_tab(), rename_button)

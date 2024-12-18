@@ -16,7 +16,7 @@ episode = None
 lowercase = None
 media_type = None
 
-def update_example(widget, example_text, selected_tab):
+def update_example(widget, example_text, selected_tab, rename_button):
     global name_delim, info_delim, sub_delim, episode, lowercase, media_type
     name_delim = widget[selected_tab]["name_delim"].get()
     info_delim = widget[selected_tab]["info_delim"].get()
@@ -43,6 +43,7 @@ def update_example(widget, example_text, selected_tab):
     example_text.delete("1.0", ctk.END) 
     example_text.insert(ctk.END, example)
     example_text.configure(state=DISABLED)
+    rename_button.configure(state=DISABLED)
 
 # Folder Functions
 
@@ -118,7 +119,6 @@ def extract_season(file_name):
         return None
 
 def search_episode_name(show_name, file_name):
-    show_name = show_name.replace(" ","+")
     s00e00 = extract_season(file_name)
     season_number = s00e00[1:3]
     episode_number = s00e00[4:6]
