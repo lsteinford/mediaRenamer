@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#This is a test pull
 import os
 import requests
 import json
@@ -137,9 +138,9 @@ def name_series(file_name):
     file_ext = get_file_extension(file_name)
     if episode is not None and episode == 1:
         episode_name = search_episode_name(show_name, file_name).replace(" ", name_delim)
-        file_name = f"{show_name.replace(".", name_delim).rstrip(name_delim)}{info_delim}{season}{info_delim}{episode_name}{file_ext}"
+        file_name = f"{show_name}{info_delim}{season}{info_delim}{episode_name}{file_ext}"
     else:
-        file_name = f"{show_name.replace(".", name_delim).rstrip(name_delim)}{info_delim}{season}{file_ext}"
+        file_name = f"{show_name}{info_delim}{season}{file_ext}"
     if lowercase == 1:
         return file_name.lower()
     else:
