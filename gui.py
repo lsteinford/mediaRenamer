@@ -46,14 +46,6 @@ widgets = {
     "movies": {}
 }
 
-naming_convention = {
-    "name_delim": {},
-    "info_delim": {},
-    "sub_delim": {},
-    "lowercase": {},
-    "episode": {}
-}
-
 delim_options = ['_',' ','-','.']
 
 # Create tab screens
@@ -75,6 +67,16 @@ def create_combobox(frame, label_text, label_row, label_col, tab_name, widget_na
 
     widgets[tab_name][widget_name] = combobox
 
+def create_checkbox(frame, label_text, tab_name, widget_name, widget_row, widget_col):
+    widgets[tab_name][widget_name] = IntVar()
+    # Checkbox
+    checkbox = ctk.CTkCheckBox(frame, variable=widgets[tab_name][widget_name], 
+                                         onvalue=1, offvalue=0, 
+                                         font=global_font, 
+                                         text=label_text, 
+                                         command=lambda:update_example(widgets, example_text, get_selected_tab(), rename_button))
+    checkbox.grid(row=widget_row, column=widget_col)
+
 
 def format_options(frame, tab_name):
     create_combobox(frame, "Name Delimiter", 2, 0, tab_name, "name_delim", 3, 0, delim_options)
@@ -85,28 +87,22 @@ def format_options(frame, tab_name):
     widgets[tab_name]["info_delim"].set("")
     widgets[tab_name]["sub_delim"].set("")
 
-    widgets[tab_name]["lowercase"] = IntVar()
-    lowercase_label = ctk.CTkLabel(frame, text="Case Sensitivity", font=global_font)
-    lowercase_label.grid(row=4, column=0, columnspan=2)
-    lowercase_check = ctk.CTkCheckBox(frame, variable=widgets[tab_name]["lowercase"], 
-                                      onvalue=1, offvalue=0, 
-                                      font=global_font, 
-                                      text="Lowercase Names", 
-                                      command=lambda:update_example(widgets, example_text, get_selected_tab(), rename_button))
-    lowercase_check.grid(row=5, column=0, columnspan=2)
+    create_checkbox(frame, "Skip API", tab_name, "skipApi", 4, 0)
+    create_checkbox(frame, "Lowercase Names", tab_name, "lowercase", 4, 1)
+
+    custom_label = ctk.CTkLabel(frame, text="Custom Info Extension", font=global_font)
+    custom_label.grid(row=5, column=1)
+    custom_ext_entry = ctk.CTkEntry(frame, width=200)
+    custom_ext_entry.grid(row=6, column=1)
+    def custom_ext(event:None):
+        update_example(widgets, example_text, get_selected_tab(), rename_button)
+    custom_ext_entry.bind("<Return>", custom_ext)
+    widgets[tab_name]["custom_ext"] = custom_ext_entry
+
 
 def build_series_tab(frame):
     format_options(frame, "series")
-
-    widgets["series"]["episode"] = IntVar()
-    episode_name_label = ctk.CTkLabel(frame, text="Episode Names", font=global_font)
-    episode_name_label.grid(row=4, column=1, columnspan=2)
-    episode_name_check = ctk.CTkCheckBox(frame, variable=widgets["series"]["episode"], 
-                                         onvalue=1, offvalue=0, 
-                                         font=global_font, 
-                                         text="Episode names in file name", 
-                                         command=lambda:update_example(widgets, example_text, get_selected_tab(), rename_button))
-    episode_name_check.grid(row=5, column=1, columnspan=2)
+    create_checkbox(frame, "Episode Names", "series", "episode", 4, 2)
 
 def build_movie_tab(frame):
     format_options(frame, "movies")
@@ -122,10 +118,10 @@ build_movie_tab(movie_tab)
 build_series_tab(series_tab)
 
 for widget in series_tab.winfo_children():
-    widget.grid_configure(padx=45, pady=5)
+    widget.grid_configure(padx=45, pady=7)
 
 for widget in movie_tab.winfo_children():
-    widget.grid_configure(padx=45, pady=5)
+    widget.grid_configure(padx=45, pady=7)
 
 # Folder Selection
 folder_frame = ctk.CTkFrame(frame)
@@ -137,11 +133,16 @@ folder_label.grid(row=0, column=0)
 folder_entry = ctk.CTkEntry(folder_frame, width=300, font=global_font)
 folder_entry.grid(row=1, column=0, columnspan=2)
 
+def browse_folders():
+    folder_entry.delete(0, ctk.END)
+    selected_folder = filedialog.askdirectory()
+    if selected_folder:
+        folder_entry.insert(0, selected_folder)
+
 browse_button = ctk.CTkButton(folder_frame, 
                               font=global_font,
                               text="Browse...",
-                              command=lambda: folder_entry.insert(0, filedialog.askdirectory())
-                              )
+                              command= browse_folders)
 browse_button.grid(row=1, column=2)
 
 folder_button = ctk.CTkButton(folder_frame, 

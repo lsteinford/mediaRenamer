@@ -15,15 +15,18 @@ info_delim = None
 sub_delim = None
 episode = None
 lowercase = None
+skip_api = None
+custom_ext = None
 media_type = None
 
 def update_example(widget, example_text, selected_tab, rename_button):
-    global name_delim, info_delim, sub_delim, episode, lowercase, media_type
+    global name_delim, info_delim, sub_delim, episode, lowercase, skip_api, media_type, custom_ext
     name_delim = widget[selected_tab]["name_delim"].get()
     info_delim = widget[selected_tab]["info_delim"].get()
     sub_delim = widget[selected_tab]["sub_delim"].get()
-    
+    skip_api = widget[selected_tab]["skipApi"].get()
     lowercase = widget[selected_tab]["lowercase"].get()
+    custom_ext = widget[selected_tab]["custom_ext"].get()
 
     example_names = ["Movie","Name","Episode","Sub", "Series"]
 
@@ -32,14 +35,21 @@ def update_example(widget, example_text, selected_tab, rename_button):
             
     media_type = 1 if selected_tab == "series" else 0
 
+    base_ext = f"{info_delim}{custom_ext}.ext" if custom_ext else ".ext"
+
+    base_movie = f"{example_names[0]}{name_delim}{example_names[1]}{sub_delim}{example_names[3]}{name_delim}{example_names[1]}{info_delim}YEAR"
+
+    base_series = f"{example_names[4]}{name_delim}{example_names[1]}{sub_delim}{example_names[3]}{name_delim}{example_names[1]}{info_delim}S00E00"
+
     if media_type == 0:
-        example = f"{example_names[0]}{name_delim}{example_names[1]}{sub_delim}{example_names[3]}{name_delim}{example_names[1]}{info_delim}YEAR.ext"
+        example = f"{base_movie}{base_ext}"
     else:
         episode = widget[selected_tab]["episode"].get()
-        if episode is not None and episode == 1:
-            example = f"{example_names[4]}{name_delim}{example_names[1]}{sub_delim}{example_names[3]}{name_delim}{example_names[1]}{info_delim}S00E00{info_delim}{example_names[2]}{name_delim}{example_names[1]}.ext"
+        if episode is not None and episode == 1 and skip_api == 0:
+            example = f"{base_series}{info_delim}{example_names[2]}{name_delim}{example_names[1]}{base_ext}"
         else:
-            example = f"{example_names[4]}{name_delim}{example_names[1]}{sub_delim}{example_names[3]}{name_delim}{example_names[1]}{info_delim}S00E00.ext"
+            example = f"{base_series}{base_ext}"
+    
     example_text.configure(state=NORMAL)
     example_text.delete("1.0", ctk.END) 
     example_text.insert(ctk.END, example)
@@ -99,10 +109,12 @@ def extract_year(file_name):
         return None
 
 def name_movie(file_name):
+    ext = f"{info_delim}{custom_ext}" if custom_ext else ""
+
     show_name = detect_name(file_name)
     year = extract_year(file_name)
     file_ext = get_file_extension(file_name)
-    file_name = f"{show_name}{info_delim}{year}{file_ext}"
+    file_name = f"{show_name}{info_delim}{year}{ext}{file_ext}"
     if lowercase == 1:
         return file_name.lower()
     else:
@@ -132,15 +144,16 @@ def search_episode_name(show_name, file_name):
     return episode_name
 
 def name_series(file_name):
+    ext = f"{info_delim}{custom_ext}" if custom_ext else ""
     
     show_name = detect_name(file_name).replace(".", name_delim).rstrip(name_delim)
     season = extract_season(file_name)
     file_ext = get_file_extension(file_name)
-    if episode is not None and episode == 1:
+    if episode is not None and episode == 1 and skip_api == 0:
         episode_name = search_episode_name(show_name, file_name).replace(" ", name_delim)
-        file_name = f"{show_name}{info_delim}{season}{info_delim}{episode_name}{file_ext}"
+        file_name = f"{show_name}{info_delim}{season}{info_delim}{episode_name}{ext}{file_ext}"
     else:
-        file_name = f"{show_name}{info_delim}{season}{file_ext}"
+        file_name = f"{show_name}{info_delim}{season}{ext}{file_ext}"
     if lowercase == 1:
         return file_name.lower()
     else:
@@ -160,8 +173,13 @@ def detect_name(file_name):
     else:
         year = extract_year(file_name)
         end_index = file_name.find(year)
-
+    
     media_name = file_name[:end_index].strip(".,-_() !")
+
+    if skip_api == 1:
+        media_name = re.sub(delim_pattern, name_delim, media_name)
+        return media_name
+    
     media_name = re.sub(delim_pattern, "+", media_name)
     url=f"http://www.omdbapi.com/?apikey={apiKey}&t={media_name}"
 
