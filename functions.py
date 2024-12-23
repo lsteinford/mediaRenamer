@@ -19,6 +19,8 @@ skip_api = None
 custom_ext = None
 media_type = None
 
+extensions = (".mkv", ".mp4", ".avi", ".wmv", ".mov")
+
 def update_example(widget, example_text, selected_tab, rename_button):
     global name_delim, info_delim, sub_delim, episode, lowercase, skip_api, media_type, custom_ext
     name_delim = widget[selected_tab]["name_delim"].get()
@@ -62,9 +64,8 @@ def parse_folder(folder_path, folder_list, preview_button):
     folder_list.configure(state=NORMAL)
     folder_list.delete("1.0", ctk.END)
     for entry in os.scandir(folder_path.get()):
-        if not entry.is_file():
-            continue
-        folder_list.insert(ctk.END, f"{entry.name}\n")
+        if entry.is_file() and entry.name.endswith(extensions):
+            folder_list.insert(ctk.END, f"{entry.name}\n")
     folder_list.configure(state=DISABLED)
     preview_button.configure(state=NORMAL)
 
@@ -72,27 +73,25 @@ def insert_preview(folder_path, preview_list, rename_button):
     preview_list.configure(state=NORMAL)
     preview_list.delete("1.0", ctk.END)
     for item in os.scandir(folder_path.get()):
-        if not item.is_file():
-            continue
-        if media_type == 0:
-            file_name = name_movie(item.name)
-        else:
-            file_name = name_series(item.name)
-        preview_list.insert(ctk.END, f"{file_name}\n")
+        if item.is_file() and item.name.endswith(extensions):
+            if media_type == 0:
+                file_name = name_movie(item.name)
+            else:
+                file_name = name_series(item.name)
+            preview_list.insert(ctk.END, f"{file_name}\n")
     rename_button.configure(state=NORMAL)
 
 def rename_file(folder_path):
 
     for item in os.scandir(folder_path.get()):
-        if not item.is_file():
-            continue
-        if media_type == 0:
-            file_name = name_movie(item.name)
-        else:
-            file_name = name_series(item.name)
-        old_name = f"{folder_path.get()}/{item.name}"
-        new_name = f"{folder_path.get()}/{file_name}"
-        os.rename(old_name, new_name)
+        if item.is_file() and item.name.endswith(extensions):
+            if media_type == 0:
+                file_name = name_movie(item.name)
+            else:
+                file_name = name_series(item.name)
+            old_name = f"{folder_path.get()}/{item.name}"
+            new_name = f"{folder_path.get()}/{file_name}"
+            os.rename(old_name, new_name)
 
 # Movie Functions
 
