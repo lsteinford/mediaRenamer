@@ -131,6 +131,8 @@ def extract_season(file_name):
         return None
 
 def search_episode_name(show_name, file_name):
+    delim_pattern = r"[._ -]|(- )|(-_)|(, )"
+    sub_title_pattern = rf":{name_delim}?"
     s00e00 = extract_season(file_name)
     season_number = s00e00[1:3]
     episode_number = s00e00[4:6]
@@ -140,6 +142,8 @@ def search_episode_name(show_name, file_name):
     data = response.text
     data = json.loads(data)
     episode_name = data['Title']
+    episode_name = re.sub(delim_pattern, name_delim, episode_name)
+    episode_name = re.sub(sub_title_pattern, sub_delim, episode_name)
     return episode_name
 
 def name_series(file_name):
@@ -163,7 +167,7 @@ def get_file_extension(file_name):
     return extension
 
 def detect_name(file_name):
-    delim_pattern = r"[._ -]|(- )|(-_)"
+    delim_pattern = r"[.,_ -]|(- )|(-_)"
     sub_title_pattern = rf":{name_delim}?"
 
     if media_type == 1:
