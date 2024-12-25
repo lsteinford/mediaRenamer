@@ -136,6 +136,7 @@ def search_episode_name(show_name, file_name):
     s00e00 = extract_season(file_name)
     season_number = s00e00[1:3]
     episode_number = s00e00[4:6]
+    show_name = show_name.replace(name_delim, '+')
     url=f"http://www.omdbapi.com/?apikey={apiKey}&t={show_name}&season={season_number}&episode={episode_number}"
     response = requests.get(url)
     response.raise_for_status()
@@ -168,7 +169,7 @@ def get_file_extension(file_name):
 
 def detect_name(file_name):
     delim_pattern = r"[.,_ -]|(- )|(-_)"
-    sub_title_pattern = rf":{name_delim}?"
+    sub_title_pattern = rf":\s?|{re.escape(name_delim)}{{2,}}"
 
     if media_type == 1:
         season = extract_season(file_name)
@@ -181,6 +182,7 @@ def detect_name(file_name):
 
     if skip_api == 1:
         media_name = re.sub(delim_pattern, name_delim, media_name)
+        media_name = re.sub(sub_title_pattern, sub_delim, media_name)
         return media_name
     
     media_name = re.sub(delim_pattern, "+", media_name)
