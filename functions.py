@@ -184,6 +184,7 @@ def name_series(file_name):
     ext = f"{info_delim}{custom_ext}" if custom_ext else ""
     
     show_name = extract_name(file_name)
+    show_name = re_format(show_name)
     season = extract_season(file_name)
     file_ext = get_file_extension(file_name)
     if episode is not None and episode == 1 and skip_api == 0:
