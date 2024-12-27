@@ -93,6 +93,31 @@ def rename_file(folder_path):
             new_name = f"{folder_path.get()}/{file_name}"
             os.rename(old_name, new_name)
 
+def re_format(data_info):
+    # Default delimiters if not set
+    global name_delim, sub_delim
+    if not name_delim:
+        name_delim = "+"  # Default value
+    if not sub_delim:
+        sub_delim = ":"  # Default value
+    
+    # Patterns
+    delim_pattern = r"[.,_ -]|(- )|(-_)"
+    sub_title_pattern = rf":\s?|{re.escape(name_delim)}{{2,}}"
+    
+    try:
+        # Replace general delimiters
+        data_info = re.sub(delim_pattern, name_delim, data_info)
+        # Replace subtitle patterns
+        data_info = re.sub(sub_title_pattern, sub_delim, data_info)
+        # Remove single quotes
+        data_info = re.sub(r"'", "", data_info)
+        # Replace ampersand
+        data_info = re.sub(r"&", "and", data_info)
+    except re.error as e:
+        print(f"Regex error: {e}")
+    
+    return data_info
 # Movie Functions
 
 # To do: else should search imdb for the year of the movie and pull it if needed
@@ -119,6 +144,16 @@ def name_movie(file_name):
     else:
         return file_name
 
+def extract_name(file_name):
+    if media_type == 1:
+        season = extract_season(file_name)
+        end_index = file_name.find(season)
+    else:
+        year = extract_year(file_name)
+        end_index = file_name.find(year)
+    
+    return file_name[:end_index].strip(".,-_() !")
+
 # Series Functions
 
 def extract_season(file_name):
@@ -131,8 +166,7 @@ def extract_season(file_name):
         return None
 
 def search_episode_name(show_name, file_name):
-    delim_pattern = r"[._ -]|(- )|(-_)|(, )"
-    sub_title_pattern = rf":{name_delim}?"
+
     s00e00 = extract_season(file_name)
     season_number = s00e00[1:3]
     episode_number = s00e00[4:6]
@@ -143,16 +177,13 @@ def search_episode_name(show_name, file_name):
     data = response.text
     data = json.loads(data)
     episode_name = data['Title']
-    episode_name = re.sub(delim_pattern, name_delim, episode_name)
-    episode_name = re.sub(sub_title_pattern, sub_delim, episode_name)
-    media_name = re.sub(r"'", "", media_name)
-    media_name = re.sub(r"&", "and", media_name)
+    episode_name = re_format(episode_name)
     return episode_name
 
 def name_series(file_name):
     ext = f"{info_delim}{custom_ext}" if custom_ext else ""
     
-    show_name = detect_name(file_name).replace(".", name_delim).rstrip(name_delim)
+    show_name = extract_name(file_name)
     season = extract_season(file_name)
     file_ext = get_file_extension(file_name)
     if episode is not None and episode == 1 and skip_api == 0:
@@ -171,22 +202,10 @@ def get_file_extension(file_name):
 
 def detect_name(file_name):
     delim_pattern = r"[.,_ -]|(- )|(-_)"
-    sub_title_pattern = rf":\s?|{re.escape(name_delim)}{{2,}}"
-
-    if media_type == 1:
-        season = extract_season(file_name)
-        end_index = file_name.find(season)
-    else:
-        year = extract_year(file_name)
-        end_index = file_name.find(year)
-    
-    media_name = file_name[:end_index].strip(".,-_() !")
+    media_name = extract_name(file_name)
 
     if skip_api == 1:
-        media_name = re.sub(delim_pattern, name_delim, media_name)
-        media_name = re.sub(sub_title_pattern, sub_delim, media_name)
-        media_name = re.sub(r"'", "", media_name)
-        media_name = re.sub(r"&", "and", media_name)
+        media_name = re_format(media_name)
         return media_name
     
     media_name = re.sub(delim_pattern, "+", media_name)
@@ -204,10 +223,7 @@ def detect_name(file_name):
         print("OMDB API call failed. Using file name instead.")
         media_name = file_name[:end_index].strip(".,-_() !")
 
-    media_name = re.sub(delim_pattern, name_delim, media_name)
-    media_name = re.sub(sub_title_pattern, sub_delim, media_name)
-    media_name = re.sub(r"'", "", media_name)
-    media_name = re.sub(r"&", "and", media_name)
+    media_name = re_format(media_name)
 
     return media_name      
 
