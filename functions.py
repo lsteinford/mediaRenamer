@@ -145,6 +145,8 @@ def search_episode_name(show_name, file_name):
     episode_name = data['Title']
     episode_name = re.sub(delim_pattern, name_delim, episode_name)
     episode_name = re.sub(sub_title_pattern, sub_delim, episode_name)
+    media_name = re.sub(r"'", "", media_name)
+    media_name = re.sub(r"&", "and", media_name)
     return episode_name
 
 def name_series(file_name):
@@ -183,6 +185,8 @@ def detect_name(file_name):
     if skip_api == 1:
         media_name = re.sub(delim_pattern, name_delim, media_name)
         media_name = re.sub(sub_title_pattern, sub_delim, media_name)
+        media_name = re.sub(r"'", "", media_name)
+        media_name = re.sub(r"&", "and", media_name)
         return media_name
     
     media_name = re.sub(delim_pattern, "+", media_name)
@@ -202,6 +206,8 @@ def detect_name(file_name):
 
     media_name = re.sub(delim_pattern, name_delim, media_name)
     media_name = re.sub(sub_title_pattern, sub_delim, media_name)
+    media_name = re.sub(r"'", "", media_name)
+    media_name = re.sub(r"&", "and", media_name)
 
     return media_name      
 
