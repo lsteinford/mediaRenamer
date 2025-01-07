@@ -19,7 +19,7 @@ skip_api = None
 custom_ext = None
 media_type = None
 
-extensions = (".mkv", ".mp4", ".avi", ".wmv", ".mov")
+extensions = (".mkv", ".mp4", ".avi", ".wmv", ".mov", ".m4v")
 
 def update_example(widget, example_text, selected_tab, rename_button):
     global name_delim, info_delim, sub_delim, episode, lowercase, skip_api, media_type, custom_ext
@@ -97,21 +97,22 @@ def re_format(data_info):
     # Default delimiters if not set
     global name_delim, sub_delim
     if not name_delim:
-        name_delim = "+"  # Default value
+        name_delim = "."  # Default value
     if not sub_delim:
-        sub_delim = ":"  # Default value
+        sub_delim = "-"  # Default value
     
     # Patterns
     delim_pattern = r"[.,_ -]|(- )|(-_)"
-    sub_title_pattern = rf":\s?|{re.escape(name_delim)}{{2,}}"
+    symbol_pattern = r"[?']"
+    sub_title_pattern = rf":\s?|{re.escape(name_delim)}{{2,}}|:{re.escape(name_delim)}|{re.escape(name_delim)}-{re.escape(name_delim)}"
     
     try:
         # Replace general delimiters
         data_info = re.sub(delim_pattern, name_delim, data_info)
         # Replace subtitle patterns
         data_info = re.sub(sub_title_pattern, sub_delim, data_info)
-        # Remove single quotes
-        data_info = re.sub(r"'", "", data_info)
+        # Remove single quotes and other special characters
+        data_info = re.sub(symbol_pattern, "", data_info)
         # Replace ampersand
         data_info = re.sub(r"&", "and", data_info)
     except re.error as e:
@@ -166,11 +167,11 @@ def extract_season(file_name):
         return None
 
 def search_episode_name(show_name, file_name):
-
+    delim_pattern = r"[.,_ -]|(- )|(-_)"
     s00e00 = extract_season(file_name)
     season_number = s00e00[1:3]
     episode_number = s00e00[4:6]
-    show_name = show_name.replace(name_delim, '+')
+    show_name = re.sub(delim_pattern, "+", show_name)
     url=f"http://www.omdbapi.com/?apikey={apiKey}&t={show_name}&season={season_number}&episode={episode_number}"
     response = requests.get(url)
     response.raise_for_status()
@@ -184,11 +185,11 @@ def name_series(file_name):
     ext = f"{info_delim}{custom_ext}" if custom_ext else ""
     
     show_name = extract_name(file_name)
-    show_name = re_format(show_name)
     season = extract_season(file_name)
     file_ext = get_file_extension(file_name)
     if episode is not None and episode == 1 and skip_api == 0:
-        episode_name = search_episode_name(show_name, file_name).replace(" ", name_delim)
+        episode_name = search_episode_name(show_name, file_name)
+        show_name = re_format(show_name)
         file_name = f"{show_name}{info_delim}{season}{info_delim}{episode_name}{ext}{file_ext}"
     else:
         file_name = f"{show_name}{info_delim}{season}{ext}{file_ext}"
