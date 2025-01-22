@@ -102,17 +102,17 @@ def re_format(data_info):
         sub_delim = "-"  # Default value
     
     # Patterns
-    delim_pattern = r"[.,_ -]|(- )|(-_)"
-    symbol_pattern = r"[?']"
+    delim_pattern = r"[.,_ -+:/]"
+    symbol_pattern = r"[?'!]"
     sub_title_pattern = rf":\s?|{re.escape(name_delim)}{{2,}}|:{re.escape(name_delim)}|{re.escape(name_delim)}-{re.escape(name_delim)}"
     
     try:
+        # Remove single quotes and other special characters
+        data_info = re.sub(symbol_pattern, "", data_info)
         # Replace general delimiters
         data_info = re.sub(delim_pattern, name_delim, data_info)
         # Replace subtitle patterns
         data_info = re.sub(sub_title_pattern, sub_delim, data_info)
-        # Remove single quotes and other special characters
-        data_info = re.sub(symbol_pattern, "", data_info)
         # Replace ampersand
         data_info = re.sub(r"&", "and", data_info)
     except re.error as e:
@@ -167,7 +167,7 @@ def extract_season(file_name):
         return None
 
 def search_episode_name(show_name, file_name):
-    delim_pattern = r"[.,_ -]|(- )|(-_)"
+    delim_pattern = r"( - )|(- )|(-_)|[.,_ -]"
     s00e00 = extract_season(file_name)
     season_number = s00e00[1:3]
     episode_number = s00e00[4:6]
